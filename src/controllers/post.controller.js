@@ -1,12 +1,12 @@
 import { StatusCodes } from 'http-status-codes'
 import { responseSuccess } from '@/common/helpers/response.helper.js'
 import { ObjectId } from 'mongodb'
-import { categoryService } from '../services/category.service.js'
+import { postService } from '../services/post.service.js'
 
 const createNew = async (req, res, next) => {
   try {
-    const result = await categoryService.createNew(req.body)
-    const response = responseSuccess(result, 'Create category successfully', StatusCodes.CREATED)
+    const result = await postService.createNew(req.body)
+    const response = responseSuccess(result, 'Create post successfully', StatusCodes.CREATED)
     res.status(response.code).json(response)
   } catch (err) {
     next(err)
@@ -16,7 +16,7 @@ const createNew = async (req, res, next) => {
 const getList = async (req, res, next) => {
   try {
     const { page, limit, type } = req.query
-    const categories = await categoryService.getList(page, limit, type)
+    const categories = await postService.getList(page, limit, type)
     const resData = responseSuccess(categories, `Get all ${type} categories successfully`)
     res.status(resData.code).json(resData)
   } catch (err) {
@@ -26,27 +26,27 @@ const getList = async (req, res, next) => {
 
 const update = async (req, res, next) => {
   try {
-    const categoryId = req.params.id
+    const postId = req.params.id
     const { ...updateFields } = req.body
 
-    if (!categoryId) {
+    if (!postId) {
       return res.status(StatusCodes.BAD_REQUEST).json({
         code: StatusCodes.BAD_REQUEST,
-        message: 'category ID is can not be empty'
+        message: 'Post ID is can not be empty'
       })
     }
 
-    if (!ObjectId.isValid(categoryId)) {
+    if (!ObjectId.isValid(postId)) {
       return res.status(StatusCodes.BAD_REQUEST).json({
         code: StatusCodes.BAD_REQUEST,
-        message: 'category ID is invalid'
+        message: 'Post ID is invalid'
       })
     }
 
     const updateData = { ...updateFields }
 
-    const updatedcategory = await categoryService.update(categoryId, updateData)
-    const resData = responseSuccess(updatedcategory, 'Category updated successfully')
+    const updatedPost = await postService.update(postId, updateData)
+    const resData = responseSuccess(updatedPost, 'Post updated successfully')
     res.status(resData.code).json(resData)
   } catch (error) {
     next(error)
@@ -55,25 +55,39 @@ const update = async (req, res, next) => {
 
 const remove = async (req, res, next) => {
   try {
-    const categoryId = req.params.id
+    const postId = req.params.id
 
-    if (!ObjectId.isValid(categoryId)) {
+    if (!ObjectId.isValid(postId)) {
       return res.status(StatusCodes.BAD_REQUEST).json({
         code: StatusCodes.BAD_REQUEST,
-        message: 'Category ID is invalid'
+        message: 'Post ID is invalid'
       })
     }
 
-    const result = await categoryService.remove(categoryId)
+    const result = await postService.remove(postId)
 
     if (!result) {
       return res.status(StatusCodes.NOT_FOUND).json({
         code: StatusCodes.NOT_FOUND,
-        message: 'Category not found'
+        message: 'Post not found'
       })
     }
 
-    const resData = responseSuccess(result, 'Category removed successfully')
+    const resData = responseSuccess(result, 'Post removed successfully')
+    res.status(resData.code).json(resData)
+
+  } catch (error) {
+    next(error)
+  }
+}
+
+const getDetail = async (req, res, next) => {
+  try {
+    const { slug } = req.params
+
+    const result = await postService.getDetail(slug)
+
+    const resData = responseSuccess(result, 'Get post detail successfully')
     res.status(resData.code).json(resData)
 
   } catch (error) {
@@ -82,9 +96,10 @@ const remove = async (req, res, next) => {
 }
 
 
-export const categoryController = {
+export const postController = {
   createNew,
   getList,
   update,
-  remove
+  remove,
+  getDetail
 }

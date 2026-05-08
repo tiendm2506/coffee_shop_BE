@@ -9,6 +9,7 @@ promotionRouter.post('/create', promotionController.createNew)
 promotionRouter.get('/list', promotionController.getList)
 promotionRouter.put('/update/:id', promotionController.update)
 promotionRouter.delete('/remove/:id', promotionController.remove)
-promotionRouter.get('/:slug', promotionController.getpromotionBySlug)
+promotionRouter.post('/check', promotionController.checkPromotionCode)
+promotionRouter.post('/subscribe', promotionController.subscribe)
 
 export default promotionRouter

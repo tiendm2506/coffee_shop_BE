@@ -4,6 +4,8 @@ import { ObjectId } from 'mongodb'
 import { DEFAULT_ITEMS_PER_PAGE, DEFAULT_PAGE } from '@/utils/constant.utils.js'
 
 const PRODUCT_COLLECTION_NAME = 'products'
+const OBJECT_ID_RULE = /^[0-9a-fA-F]{24}$/
+
 
 const PRODUCT_COLLECTION_SCHEMA = Joi.object({
   name: Joi.string().min(3).max(100).trim(),
@@ -13,8 +15,14 @@ const PRODUCT_COLLECTION_SCHEMA = Joi.object({
   on_sale: Joi.boolean(),
   origin_price: Joi.number(),
   promotion_price: Joi.number().allow(null),
-  category: Joi.string(),
-  category_slug: Joi.string(),
+  category: Joi.object({
+    id: Joi.string().pattern(OBJECT_ID_RULE).required(),
+    name: Joi.string().trim().required(),
+    slug: Joi.string().trim().required()
+  })
+    .required()
+    .unknown(false),
+
   highlight: Joi.boolean(),
   status: Joi.string().trim(),
   amount_in_stock: Joi.number(),
@@ -70,7 +78,7 @@ const getList = async ({
 
     // category filter
     if (cleanFilters.category_slug) {
-      query.category_slug = cleanFilters.category_slug
+      query['category.slug'] = cleanFilters.category_slug
     }
 
     // search filter
@@ -154,10 +162,25 @@ const getProductBySlug = async (req, res) => {
   }
 }
 
+const countProductByCategoryId = async (categoryId) => {
+  try {
+    const result = await GET_DB()
+      .collection(PRODUCT_COLLECTION_NAME)
+      .countDocuments({
+        'category.id': categoryId
+      })
+
+    return result
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
 export const productModel = {
   createNew,
   getList,
   update,
   remove,
-  getProductBySlug
+  getProductBySlug,
+  countProductByCategoryId
 }

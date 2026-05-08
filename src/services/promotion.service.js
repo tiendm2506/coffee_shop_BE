@@ -1,8 +1,11 @@
 import { promotionModel } from '@/models/promotion.model.js'
 import { DEFAULT_ITEMS_PER_PAGE, DEFAULT_PAGE } from '../utils/constant.utils.js'
+import { BadRequestException } from '../common/helpers/error.helper.js'
 
 const createNew = async (reqBody) => {
   try {
+    const existing = await promotionModel.findByCode(reqBody.code)
+    if (existing) throw new BadRequestException('Promotion code already exists')
     const result = await promotionModel.createNew(reqBody)
     return result
   } catch (error) {
@@ -29,7 +32,7 @@ const update = async (promotionId, reqBody) => {
   try {
     const updateData = {
       ...reqBody,
-      updatedAt: Date.now(),
+      updatedAt: Date.now()
     }
     const updatedpromotion = await promotionModel.update(promotionId, updateData)
     return updatedpromotion
@@ -47,10 +50,19 @@ const remove = async (promotionId) => {
   }
 }
 
-const getPromotionBySlug = async (req, res) => {
+const checkPromotionCode = async (promotion_code) => {
   try {
-    const result = await promotionModel.getPromotionBySlug(req, res)
-    return result
+    const promotion = await promotionModel.checkPromotionCode(promotion_code)
+    if (!promotion) {
+      throw new BadRequestException('Invalid promotion code')
+    }
+    if (promotion.status !== 'Active') {
+      throw new BadRequestException('Promotion code not active')
+    }
+    if (new Date(promotion.expired_date).getTime() < Date.now()) {
+      throw new BadRequestException('Promotion code expired')
+    }
+    return promotion
   } catch (error) {
     throw new Error(error)
   }
@@ -61,5 +73,5 @@ export const promotionService = {
   getList,
   update,
   remove,
-  getPromotionBySlug
+  checkPromotionCode
 }

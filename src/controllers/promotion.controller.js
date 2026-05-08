@@ -82,11 +82,22 @@ const remove = async (req, res, next) => {
   }
 }
 
-const getpromotionBySlug = async (req, res, next) => {
+const checkPromotionCode = async (req, res, next) => {
+  const promotion_code = req.body.code
   try {
-    const promotion = await promotionService.getpromotionBySlug(req, res)
-    const resData = responseSuccess(promotion, 'Get promotion detail successfully')
+    const promotion = await promotionService.checkPromotionCode(promotion_code)
+    const resData = responseSuccess(promotion, 'Check promotion code successfully')
     res.status(resData.code).json(resData)
+  } catch (err) {
+    next(err)
+  }
+}
+
+const subscribe = async (req, res, next) => {
+  try {
+    const result = await promotionService.subscribe(req.body)
+    const response = responseSuccess(result, 'Subscribe promotion successfully', StatusCodes.CREATED)
+    res.status(response.code).json(response)
   } catch (err) {
     next(err)
   }
@@ -97,5 +108,6 @@ export const promotionController = {
   getList,
   update,
   remove,
-  getpromotionBySlug
+  checkPromotionCode,
+  subscribe
 }

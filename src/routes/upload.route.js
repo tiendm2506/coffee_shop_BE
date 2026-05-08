@@ -4,6 +4,6 @@ import { uploadController } from '../controllers/upload.controller.js'
 
 const uploadRouter = express.Router()
 
-uploadRouter.post('/upload', upload.single('upload'), uploadController.uploadImage)
+uploadRouter.post('/image', upload.single('upload'), uploadController.uploadImage)
 
 export default uploadRouter

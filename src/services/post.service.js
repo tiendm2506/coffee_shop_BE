@@ -1,11 +1,10 @@
-import { categoryModel } from '../models/category.model.js'
-import { productModel } from '../models/product.model.js'
+import { postModel } from '../models/post.model.js'
 import { DEFAULT_ITEMS_PER_PAGE, DEFAULT_PAGE } from '../utils/constant.utils.js'
 import { BadRequestException } from '../common/helpers/error.helper.js'
 
 const createNew = async (reqBody) => {
   try {
-    const result = await categoryModel.createNew(reqBody)
+    const result = await postModel.createNew(reqBody)
     return result
   } catch (error) {
     throw new Error(error)
@@ -16,7 +15,7 @@ const getList = async (page, limit, type) => {
   try {
     if (!page) page = DEFAULT_PAGE
     if (!limit) limit = DEFAULT_ITEMS_PER_PAGE
-    const data = await categoryModel.getList({
+    const data = await postModel.getList({
       page: parseInt(page, 10),
       limit: parseInt(limit, 10),
       type
@@ -27,36 +26,41 @@ const getList = async (page, limit, type) => {
   }
 }
 
-const update = async (categoryId, reqBody) => {
+const update = async (postId, reqBody) => {
   try {
     const updateData = {
       ...reqBody,
       updatedAt: Date.now()
     }
-    const updatedCategory = await categoryModel.update(categoryId, updateData)
-    return updatedCategory
+    const updatedpost = await postModel.update(postId, updateData)
+    return updatedpost
   } catch (error) {
     throw new Error(error)
   }
 }
 
-const remove = async (categoryId) => {
+const remove = async (postId) => {
   try {
-    const productCount = await productModel.countProductByCategoryId(categoryId)
-    if (productCount > 0) {
-      throw new BadRequestException(`You have ${productCount} products link to this category. Cannot delete.`)
-    }
-    const result = await categoryModel.remove(categoryId)
+    const result = await postModel.remove(postId)
     return result
   } catch (error) {
     throw new BadRequestException(error.message)
   }
 }
 
+const getDetail = async (slug) => {
+  try {
+    return await postModel.getDetail(slug)
+  } catch (error) {
+    throw error
+  }
+}
 
-export const categoryService = {
+
+export const postService = {
   createNew,
   getList,
   update,
-  remove
+  remove,
+  getDetail
 }

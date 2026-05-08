@@ -2,12 +2,14 @@ import Joi from 'joi'
 import { GET_DB } from '@/config/db.js'
 import { ObjectId } from 'mongodb'
 import { DEFAULT_ITEMS_PER_PAGE, DEFAULT_PAGE } from '@/utils/constant.utils.js'
+import { BadRequestException } from '../common/helpers/error.helper.js'
 
 const PROMOTION_COLLECTION_NAME = 'promotion_code'
 
 const PROMOTION_COLLECTION_SCHEMA = Joi.object({
   name: Joi.string().min(3).max(100).trim(),
   type: Joi.string().trim(),
+  code: Joi.string().trim(),
   value: Joi.string().trim(),
   expired_date: Joi.string().trim(),
   status: Joi.string().trim(),
@@ -102,7 +104,7 @@ const update = async (promotionId, updateData) => {
     const newUpdateData = { ...validatedUpdateData }
 
     const result = await GET_DB()
-      .collection(promotion_COLLECTION_NAME)
+      .collection(PROMOTION_COLLECTION_NAME)
       .findOneAndUpdate(
         { _id: new ObjectId(promotionId) },
         { $set: newUpdateData },
@@ -124,14 +126,15 @@ const remove = async (promotionId) => {
   }
 }
 
-const getpromotionBySlug = async (req, res) => {
-  try {
-    const promotion = await GET_DB().collection(PROMOTION_COLLECTION_NAME).findOne({ slug: req.params.slug })
-    if (!promotion) return res.status(404).json({ message: 'Not found promotion.' })
-    return promotion
-  } catch (error) {
-    throw new Error(error)
-  }
+const checkPromotionCode = async (promotion_code) => {
+  const promotion = await GET_DB().collection(PROMOTION_COLLECTION_NAME).findOne({ code: promotion_code, _destroy: false })
+  return promotion
+}
+
+const findByCode = async (code) => {
+  return await GET_DB()
+    .collection(PROMOTION_COLLECTION_NAME)
+    .findOne({ code })
 }
 
 export const promotionModel = {
@@ -139,5 +142,6 @@ export const promotionModel = {
   getList,
   update,
   remove,
-  getpromotionBySlug
+  checkPromotionCode,
+  findByCode
 }

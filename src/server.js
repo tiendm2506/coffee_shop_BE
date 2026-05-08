@@ -2,10 +2,12 @@
 import express from 'express'
 import exitHook from 'async-exit-hook'
 import cors from 'cors'
+import http from 'http'
 import { CONNECT_DB, CLOSE_DB } from './config/db.js'
 import { env } from './config/environment.js'
 import rootRouter from './routes/root.router.js'
 import { handleError } from '@/common/helpers/error.helper.js'
+import { initSocket } from './socket.js'
 
 import dns from 'node:dns/promises'
 dns.setServers(['1.1.1.1', '8.8.8.8'])
@@ -22,7 +24,11 @@ const START_SERVER = () => {
   app.use(rootRouter)
   app.use(handleError)
 
-  app.listen(PORT, () => {
+  const server = http.createServer(app)
+
+  initSocket(server)
+
+  server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`)
   })
 

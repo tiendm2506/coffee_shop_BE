@@ -11,14 +11,14 @@ const createNew = async (reqBody) => {
   }
 }
 
-const getList = async (page, limit, type) => {
+const getList = async (page, limit, queryFilters) => {
   try {
     if (!page) page = DEFAULT_PAGE
     if (!limit) limit = DEFAULT_ITEMS_PER_PAGE
     const data = await postModel.getList({
       page: parseInt(page, 10),
       limit: parseInt(limit, 10),
-      type
+      queryFilters
     })
     return data
   } catch (error) {

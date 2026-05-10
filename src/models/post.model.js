@@ -4,6 +4,7 @@ import { ObjectId } from 'mongodb'
 import { DEFAULT_ITEMS_PER_PAGE, DEFAULT_PAGE } from '@/utils/constant.utils.js'
 
 const POST_COLLECTION_NAME = 'posts'
+const OBJECT_ID_RULE = /^[0-9a-fA-F]{24}$/
 
 const POST_COLLECTION_SCHEMA = Joi.object({
   title: Joi.string()
@@ -17,10 +18,27 @@ const POST_COLLECTION_SCHEMA = Joi.object({
       'string.max': 'Title must not exceed 100 characters',
       'any.required': 'Title is required'
     }),
+  description: Joi.string()
+    .min(3)
+    .trim()
+    .required()
+    .messages({
+      'string.empty': 'Description is required',
+      'string.min': 'Description must be at least 3 characters',
+      'any.required': 'Description is required'
+    }),
   slug: Joi.string().required('Slug is required'),
   content: Joi.string().required('Content is required'),
   thumbnail: Joi.string().allow('').default(''),
+  category: Joi.object({
+    id: Joi.string().pattern(OBJECT_ID_RULE).required(),
+    name: Joi.string().trim().required(),
+    slug: Joi.string().trim().required()
+  })
+    .required()
+    .unknown(false),
   published: Joi.boolean().default(true),
+  highlight: Joi.boolean().default(false),
   createdAt: Joi.date().timestamp('javascript').default(Date.now),
   updatedAt: Joi.date().timestamp('javascript').default(null),
   _destroy: Joi.boolean().default(false)
@@ -51,16 +69,41 @@ const createNew = async (data) => {
 const getList = async ({
   page = DEFAULT_PAGE,
   limit = DEFAULT_ITEMS_PER_PAGE,
-  type
+  queryFilters = {}
 }) => {
   try {
     const skip = (page - 1) * limit
     const query = {}
     const result = await GET_DB().collection(POST_COLLECTION_NAME)
-    if (type) {
-      query.type = type
+
+    // remove undefined values
+    const cleanFilters = Object.fromEntries(
+      Object.entries(queryFilters).filter(([_, v]) => v !== undefined)
+    )
+
+    // highlight filter
+    if (cleanFilters.highlight != null) {
+      query.highlight =
+        cleanFilters.highlight === 'true' ||
+        cleanFilters.highlight === true
     }
 
+    // category filter
+    if (cleanFilters.category_slug) {
+      query['category.slug'] = cleanFilters.category_slug
+    }
+
+    // search filter
+    if (cleanFilters.q) {
+      query.name = {
+        $regex: cleanFilters.q,
+        $options: 'i'
+      }
+    }
+
+    if (cleanFilters.exclude) {
+      query._id = { $ne: new ObjectId(cleanFilters.exclude) }
+    }
 
     const [posts, total] = await Promise.all([
       result

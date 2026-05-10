@@ -15,9 +15,10 @@ const createNew = async (req, res, next) => {
 
 const getList = async (req, res, next) => {
   try {
-    const { page, limit, type } = req.query
-    const categories = await postService.getList(page, limit, type)
-    const resData = responseSuccess(categories, `Get all ${type} categories successfully`)
+    const { page, limit, q, ...rest } = req.query
+    const queryFilters = { ...rest, q }
+    const posts = await postService.getList(page, limit, queryFilters)
+    const resData = responseSuccess(posts, 'Get all posts successfully')
     res.status(resData.code).json(resData)
   } catch (err) {
     next(err)
